@@ -1,103 +1,109 @@
-import Image from "next/image";
+'use client'
+import { useEffect, useState } from 'react'
+import type { Incident, Camera } from '@prisma/client'
 
-export default function Home() {
+export type IncidentWithCamera = Incident & { camera: Camera }
+
+export default function DashboardPage() {
+  const [incidents, setIncidents] = useState<IncidentWithCamera[]>([])
+  useEffect(() => {
+    fetch('/api/incidents?resolved=false')
+      .then(r => r.json())
+      .then(setIncidents)
+  }, [])
+
+  const resolve = async (id: number) => {
+    setIncidents(incs => incs.filter(i => i.id !== id))
+    await fetch(`/api/incidents/${id}`, { method: 'PATCH' })
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="flex flex-col md:flex-row bg-gray-900 text-white min-h-screen">
+      {/* Left: Player */}
+      <div className="w-full md:w-2/3 flex flex-col p-4 space-y-4">
+        <div className="flex-1 bg-black rounded-lg overflow-hidden flex flex-col min-h-[300px]">
+          <div className="bg-[#1c1c1c] px-4 py-2 text-sm border-b border-gray-700">
+            📅 11/7/2025 – 03:12:37
+          </div>
+          <div className="flex-1">
+            <img
+              src="/video-stub.jpg"
+              alt="Incident video"
+              className="w-full h-full object-cover"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+          <img
+            src="/thumb1.jpg"
+            alt=""
+            className="w-full sm:w-1/2 h-24 md:h-32 object-cover rounded-lg"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+          <img
+            src="/thumb2.jpg"
+            alt=""
+            className="w-full sm:w-1/2 h-24 md:h-32 object-cover rounded-lg"
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+      </div>
+
+      {/* Right: Incident List */}
+      <div className="w-full md:w-1/3 flex flex-col p-4">
+        <h2 className="text-xl font-semibold flex-shrink-0">
+          {incidents.length} Unresolved Incidents
+        </h2>
+        <div className="mt-2 flex-1 overflow-y-auto space-y-4 pr-2 max-h-[70vh]">
+          {incidents.map((inc) => (
+            <div
+              key={inc.id}
+              className="flex flex-col sm:flex-row sm:items-center justify-between bg-[#1c1c1c] p-3 rounded-lg space-y-2 sm:space-y-0"
+            >
+              <div className="flex items-center space-x-3">
+                <img
+                  src={inc.thumbnailUrl}
+                  alt=""
+                  className="w-16 h-12 object-cover rounded"
+                />
+                <div>
+                  <div className="font-semibold flex items-center space-x-1">
+                    <span
+                      className={
+                        inc.type === 'Gun Threat'
+                          ? 'text-red-500'
+                          : 'text-yellow-400'
+                      }
+                    >
+                      ●
+                    </span>
+                    <span>{inc.type}</span>
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {inc.camera.location}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {new Date(inc.tsStart).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}{' '}
+                    –{' '}
+                    {new Date(inc.tsEnd).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => resolve(inc.id)}
+                className="text-yellow-400 hover:underline flex-shrink-0 self-end sm:self-auto"
+              >
+                Resolve →
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  );
+  )
 }
